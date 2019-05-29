@@ -23,9 +23,9 @@ public class CustomerDAOImpl implements CustomerDAO {
 		// get the current hibernate session
 		Session session = sessionFactory.getCurrentSession();
 		
-		// create a query
+		// create a query. Sort by last name
 		Query<Customer> theQuery = 
-				session.createQuery("from Customer", Customer.class);
+				session.createQuery("from Customer order by lastName", Customer.class);
 		
 		// execute query and get result list
 		List<Customer> customers = theQuery.getResultList();
@@ -41,8 +41,60 @@ public class CustomerDAOImpl implements CustomerDAO {
 		Session session = sessionFactory.getCurrentSession();
 		
 		// save the customer to DB
-		session.save(customer);
+		session.saveOrUpdate(customer);
 		
+	}
+
+	@Override
+	public Customer getCustomer(int id) {
+		// get current hibernate session
+		Session session = sessionFactory.getCurrentSession();
+		
+		// retrieve from database using primary key
+		Customer customer = session.get(Customer.class, id);
+		
+		return customer;
+	}
+
+	@Override
+	public void deleteCustomer(int id) {
+		// get current hibernate session
+		Session session = sessionFactory.getCurrentSession();
+		
+		// get customer from database based on PK
+		Customer customer = session.get(Customer.class, id);
+
+		// delete customer
+		session.delete(customer);
+		
+		/*
+		Query query = session.createQuery("delete from Customer where id := customerId");
+		query.setParameter("customerId", id);
+		query.executeUpdate();
+		*/
+		
+	}
+
+	@Override
+	public List<Customer> searchCustomers(String searchName) {
+		
+		// get the current hibernate session
+		Session session = sessionFactory.getCurrentSession();
+		
+		Query query = null;
+		
+		if(searchName != null && searchName.trim().length() > 0) {
+			query = session.createQuery("from Customer where lower(firstName)"
+					+ "like :theName or lower(lastName) like :theName", Customer.class);
+			query.setParameter("theName", "%" + searchName.toLowerCase() + "%");
+		}else {
+			query = session.createQuery("from Customer", Customer.class);
+		}
+		
+		// execute query and get result list
+		List<Customer> customers = query.getResultList();
+		
+		return customers;
 	}
 
 }
